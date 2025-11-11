@@ -6,7 +6,8 @@ export default function Home() {
   const [countInput, setCountInput] = useState("");
   const [sumInput, setSumInput] = useState("");
   const [exclude, setExclude] = useState<number[]>([]);
-  const [include, setInclude] = useState<number[]>([]);
+  const [includeAll, setIncludeAll] = useState<number[]>([]);
+  const [includeAny, setIncludeAny] = useState<number[]>([]);
   const [results, setResults] = useState<number[][]>([]);
   const [emoji, setEmoji] = useState("");
   const [inAll, setInAll] = useState<number[]>([]); // Digits present in all results
@@ -22,6 +23,13 @@ export default function Home() {
     }
     const count = parseInt(countInput);
     const sum = parseInt(sumInput);
+    if (count > 9 || count < 1 || sum < 1 || sum > 45) {
+      setResults([]);
+      setEmoji("");
+      setInAll([]);
+      setNumbers([]);
+      return;
+    }
 
     let res: number[][] = [[]];
     for (let i = 0; i < count; i++) {
@@ -35,10 +43,16 @@ export default function Home() {
         }
       }
     }
-    // Check include
-    if (include.length) {
+    // Check include all
+    if (includeAll.length) {
       res = res.filter((combination) =>
-        include.every((i) => combination.includes(i))
+        includeAll.every((i) => combination.includes(i))
+      );
+    }
+    // Check include any
+    if (includeAny.length) {
+      res = res.filter((combination) =>
+        includeAny.some((i) => combination.includes(i))
       );
     }
     // Check sum
@@ -89,7 +103,8 @@ export default function Home() {
     setCountInput("");
     setSumInput("");
     setExclude([]);
-    setInclude([]);
+    setIncludeAll([]);
+    setIncludeAny([]);
     setResults([]);
     setEmoji("");
     setInAll([]);
@@ -98,8 +113,8 @@ export default function Home() {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center p-2 
-      bg-gradient-to-b from-amber-50 to-orange-100 
+      className="min-h-screen flex items-center justify-center p-2
+      bg-gradient-to-b from-amber-50 to-orange-100
       dark:from-gray-900 dark:to-gray-800 transition-colors"
     >
       <main className="bg-white dark:bg-gray-900 shadow-lg rounded-2xl p-4 w-full max-w-md flex flex-col gap-6 transition-colors">
@@ -115,14 +130,13 @@ export default function Home() {
               name="count"
               value={countInput}
               onChange={(e) => setCountInput(e.target.value)}
-              onBlur={() => handleClick()}
               type="number"
               pattern="\d*"
               min="1"
               max="9"
-              className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 
-                p-2 bg-amber-50 dark:bg-gray-800 
-                text-gray-900 dark:text-gray-100 
+              className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700
+                p-2 bg-amber-50 dark:bg-gray-800
+                text-gray-900 dark:text-gray-100
                 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors"
             />
           </label>
@@ -134,14 +148,13 @@ export default function Home() {
               name="sum"
               value={sumInput}
               onChange={(e) => setSumInput(e.target.value)}
-              onBlur={() => handleClick()}
               type="number"
               pattern="\d*"
               min="1"
               max="100"
-              className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 
-                p-2 bg-amber-50 dark:bg-gray-800 
-                text-gray-900 dark:text-gray-100 
+              className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700
+                p-2 bg-amber-50 dark:bg-gray-800
+                text-gray-900 dark:text-gray-100
                 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors"
             />
           </label>
@@ -167,22 +180,21 @@ export default function Home() {
               }
               type="number"
               pattern="\d*"
-              onBlur={() => handleClick()}
-              className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 
-                p-2 bg-amber-50 dark:bg-gray-800 
-                text-gray-900 dark:text-gray-100 
+              className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700
+                p-2 bg-amber-50 dark:bg-gray-800
+                text-gray-900 dark:text-gray-100
                 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors tracking-widest"
             />
           </label>
 
           <label className="font-medium text-gray-700 dark:text-gray-300">
-            Include?
+            Include (all)?
             <input
               id="include"
               name="include"
-              value={include.join("")}
+              value={includeAll.join("")}
               onChange={(e) =>
-                setInclude(
+                setIncludeAll(
                   [
                     ...new Set(
                       e.target.value
@@ -196,10 +208,37 @@ export default function Home() {
               }
               type="number"
               pattern="\d*"
-              onBlur={() => handleClick()}
-              className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700 
-                p-2 bg-amber-50 dark:bg-gray-800 
-                text-gray-900 dark:text-gray-100 
+              className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700
+                p-2 bg-amber-50 dark:bg-gray-800
+                text-gray-900 dark:text-gray-100
+                focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors tracking-widest"
+            />
+          </label>
+
+          <label className="font-medium text-gray-700 dark:text-gray-300">
+            Include (any)?
+            <input
+              id="include"
+              name="include"
+              value={includeAny.join("")}
+              onChange={(e) =>
+                setIncludeAny(
+                  [
+                    ...new Set(
+                      e.target.value
+                        .split("")
+                        .filter(Boolean)
+                        .map(Number)
+                        .filter(Boolean)
+                    ),
+                  ].sort()
+                )
+              }
+              type="number"
+              pattern="\d*"
+              className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-700
+                p-2 bg-amber-50 dark:bg-gray-800
+                text-gray-900 dark:text-gray-100
                 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors tracking-widest"
             />
           </label>
@@ -208,8 +247,8 @@ export default function Home() {
         <div className="flex flex-col gap-4">
           <button
             onClick={handleClick}
-            className="w-full bg-green-600 text-white py-2 rounded-lg 
-            hover:bg-green-700 dark:hover:bg-green-500 
+            className="w-full bg-green-600 text-white py-2 rounded-lg
+            hover:bg-green-700 dark:hover:bg-green-500
             transition-colors font-bold shadow-md"
           >
             Compute
@@ -217,8 +256,8 @@ export default function Home() {
 
           <button
             onClick={handleClear}
-            className="w-full bg-red-700 text-white py-2 rounded-lg 
-            hover:bg-red-800 dark:hover:bg-red-600 
+            className="w-full bg-red-700 text-white py-2 rounded-lg
+            hover:bg-red-800 dark:hover:bg-red-600
             transition-colors font-bold shadow-md"
           >
             Clear
